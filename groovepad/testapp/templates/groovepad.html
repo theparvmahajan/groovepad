@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GroovePad Studio</title>
+</head>
+<style>
+    /* Base Styles */
+:root {
+    --primary-color: #6a00ff;
+    --secondary-color: #ff00ff;
+    --bg-color: #0a0a0a;
+    --pad-bg: #181818;
+    --pad-active: #242424;
+    --text-color: #ffffff;
+    --neon-glow: 0 0 5px rgba(106, 0, 255, 0.7), 0 0 10px rgba(255, 0, 255, 0.5);
+    --neon-text-glow: 0 0 5px rgba(106, 0, 255, 0.7), 0 0 10px rgba(255, 0, 255, 0.5);
+  }
+  
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: "Arial", sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  .app-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  /* Header and Title */
+  header {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  
+  h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+  }
+  
+  h1 span {
+    background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: var(--neon-text-glow);
+  }
+  
+  /* Global Controls */
+  .global-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(20, 20, 20, 0.7);
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  }
+  
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .control-group label {
+    font-size: 0.8rem;
+    color: #ccc;
+  }
+  
+  input[type="range"] {
+    -webkit-appearance: none;
+    height: 5px;
+    background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 15px;
+    height: 15px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: var(--neon-glow);
+  }
+  
+  input[type="number"] {
+    width: 60px;
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 5px;
+    padding: 5px;
+    text-align: center;
+  }
+  
+  .neon-button {
+    background: rgba(30, 30, 30, 0.7);
+    color: #fff;
+    border: 1px solid var(--primary-color);
+    border-radius: 5px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    box-shadow: var(--neon-glow);
+  }
+  
+  .neon-button:hover {
+    background: rgba(50, 50, 50, 0.7);
+    box-shadow: 0 0 10px var(--primary-color), 0 0 20px var(--secondary-color);
+  }
+  
+  .neon-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .record-btn.recording {
+    background: rgba(255, 0, 0, 0.3);
+    border-color: #ff0000;
+    animation: pulse 1.5s infinite;
+  }
+  
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 5px rgba(255, 0, 0, 0.7);
+    }
+    50% {
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.9);
+    }
+    100% {
+      box-shadow: 0 0 5px rgba(255, 0, 0, 0.7);
+    }
+  }
+  
+  /* Visualizer */
+  .visualizer-container {
+    width: 100%;
+    height: 100px;
+    background: rgba(20, 20, 20, 0.5);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  
+  #visualizer {
+    width: 100%;
+    height: 100%;
+  }
+  
+  /* Mode Selector */
+  .mode-selector {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .mode-btn {
+    background: rgba(30, 30, 30, 0.7);
+    color: #ccc;
+    border: 1px solid #444;
+    border-radius: 5px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .mode-btn.active {
+    background: rgba(50, 50, 50, 0.7);
+    color: #fff;
+    border-color: var(--primary-color);
+    box-shadow: var(--neon-glow);
+  }
+  
+  /* Pad Container */
+  .pad-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  /* Pad Styling */
+  .pad {
+    background-color: var(--pad-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .pad:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--neon-glow);
+  }
+  
+  .pad.active {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 10px var(--primary-color), 0 0 20px var(--secondary-color);
+  }
+  
+  /* Add styling for custom pads */
+  .pad.custom-pad {
+    border-color: var(--secondary-color);
+    position: relative;
+  }
+  
+  .pad.custom-pad::after {
+    content: "Custom";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 0.6rem;
+    background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+    padding: 2px 5px;
+    border-radius: 3px;
+    opacity: 0.8;
+  }
+  
+  .pad-content {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 120px;
+    cursor: pointer;
+    position: relative;
+  }
+  
+  .beat-name {
+    color: #fff;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    text-align: center;
+    z-index: 2;
+  }
+  
+  /* Loader Animation */
+  .loader {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    opacity: 0.3;
+    transition: all 0.3s ease;
+  }
+  
+  .pad.active .loader {
+    opacity: 1;
+    animation: spin 2s linear infinite;
+    border-top-color: var(--secondary-color);
+    border-bottom-color: var(--primary-color);
+  }
+  
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  
+  /* Pad Controls */
+  .pad-controls {
+    background: rgba(20, 20, 20, 0.7);
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 5px;
+    border-top: 1px solid #333;
+  }
+  
+  .pad-controls .control-group {
+    flex: 1;
+    min-width: 60px;
+  }
+  
+  .pad-controls .control-group label {
+    font-size: 0.7rem;
+  }
+  
+  .pad-controls input[type="range"] {
+    width: 100%;
+  }
+  
+  .loop-btn {
+    background: #222;
+    color: #ccc;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .loop-btn.active {
+    background: rgba(106, 0, 255, 0.3);
+    color: #fff;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 5px rgba(106, 0, 255, 0.5);
+  }
+  
+  /* Session Controls */
+  .session-controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+  }
+  
+  #load-session {
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 5px;
+    padding: 8px 15px;
+    cursor: pointer;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .pad-container {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+  
+    .global-controls {
+      flex-direction: column;
+      align-items: center;
+    }
+  
+    .control-group {
+      width: 100%;
+      flex-direction: row;
+      justify-content: space-between;
+    }
+  
+    h1 {
+      font-size: 2rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .pad-container {
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+  
+    .pad-content {
+      height: 100px;
+    }
+  
+    .loader {
+      width: 40px;
+      height: 40px;
+    }
+  
+    .mode-selector {
+      flex-wrap: wrap;
+    }
+  }
+  
+  /* Modal Dialog */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    overflow: auto;
+  }
+  
+  .modal-content {
+    background-color: #1a1a1a;
+    margin: 10% auto;
+    padding: 25px;
+    border: 1px solid var(--primary-color);
+    border-radius: 10px;
+    width: 80%;
+    max-width: 500px;
+    box-shadow: var(--neon-glow);
+    animation: modalFadeIn 0.3s;
+  }
+  
+  @keyframes modalFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .close-modal {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  
+  .close-modal:hover {
+    color: var(--secondary-color);
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #ccc;
+  }
+  
+  .form-group input[type="text"],
+  .form-group select {
+    width: 100%;
+    padding: 8px;
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 5px;
+  }
+  
+  .form-group input[type="file"] {
+    width: 100%;
+    padding: 8px;
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  #upload-beat {
+    margin-top: 10px;
+    width: 100%;
+  }
+  
+.main .top-nav  button{
+    background: transparent;
+    border: 0;
+    outline: 0;
+    color: #7b7b7b;
+}
+.main .top-nav .prev-btn button i{
+   color: #7b7b7b;
+   font-size: 22px;
+   margin-right: 10px;
+}
+.top-nav .prev-btn span i {
+    color: white; 
+    font-size: large;
+    margin-left: 30px;
+}
+.main .top-nav  button {
+  background: transparent;
+  border: 0;
+  outline: 0;
+}
+.top-nav .login-btn .sign-up{
+    color: #838181;
+    font-size: 16px;
+    font-weight: 600;
+    margin-right:20px ;
+}
+.top-nav .login-btn .sign-up:hover{
+    color: white;
+    transition: 0.5s;
+}
+.top-nav .login-btn .login{
+    color: #000000;
+    font-size: 16px;
+    font-weight: 600;
+    background-color: azure;
+    border-radius: 20px;
+    padding: 10px 15px;
+}
+.top-nav .login-btn .login:hover{
+    background-color: #595858;
+}
+.button-container {
+    display: flex; 
+    justify-content: flex-start; 
+    margin-bottom: 20px; 
+    padding-left: 10px; 
+}
+
+.button-container .btn {
+    color: rgb(211, 209, 209);
+    font-size: small;
+    font-size: 16px;
+    font-weight: 600;
+    background-color: rgb(81, 14, 197);
+    border-radius: 20px;
+    padding: 10px 15px;
+    border: none;
+    margin-right: 15px;
+}
+
+.button-container .btn:hover {
+    background-color: #e1e1e1;
+    color: #000000; 
+}
+  
+</style>
+<body>
+    <div class="main"> 
+        <div class="top-nav">
+            <div class="prev-btn">
+                <span><i class="fa-solid fa-bell"></i></span>
+            </div>
+
+            <div class="login-btn" style="text-align: center; margin-top: 20px;">
+                {% if request.session.username %}
+                <div class="user-info" style="display: flex; justify-content: space-between; align-items: center; background: rgba(30,30,30,0.7); padding: 8px 15px; border-radius: 20px; border: 1px solid #6d44b8; box-shadow: 0 0 10px rgba(106,0,255,0.5);">
+                    <span style="font-weight: 600; color: white; margin-right: auto;">{{ request.session.username }}</span>
+                    <form action="{% url 'logout' %}" method="POST" style="margin-left: auto;">
+                        {% csrf_token %}
+                        <button type="submit" style="background: #ff4d4d; color: white; border: none; border-radius: 20px; padding: 5px 15px; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">Logout</button>
+                    </form>
+                </div>
+                {% else %}
+                <a href="{% url 'signup' %}"><button class="sign-up" style="margin-right: 15px; padding: 8px 20px; background: #573b8a; color: white; border: none; border-radius: 5px; cursor: pointer;">Sign-Up</button></a>
+                <a href="{% url 'login' %}"><button class="login" style="padding: 8px 20px; background: #6d44b8; color: white; border: none; border-radius: 5px; cursor: pointer;">Login</button></a>
+                {% endif %}
+            </div>
+    </div>  <!-- Closing the main div that was opened before the if statement -->
+    {% if request.session.username %}
+    <div class="app-container">
+    {% endif %}
+        <header>
+            <h1><span>GroovePad Studio</span></h1>
+            <div class="global-controls">
+                <div class="control-group">
+                    <label for="master-volume">Master Volume</label>
+                    <input type="range" id="master-volume" min="0" max="100" value="80">
+                </div>
+                <div class="control-group">
+                    <label for="bpm">BPM</label>
+                    <input type="number" id="bpm" min="60" max="180" value="120">
+                </div>
+                <button id="stop-all" class="neon-button">Stop All</button>
+                <button id="record-toggle" class="neon-button record-btn">Record</button>
+                <button id="download-recording" class="neon-button" disabled>Download</button>
+                <button id="add-custom-beat" class="neon-button">Add Custom Beat</button>
+            </div>
+        </header>
+        
+
+        <div class="visualizer-container">
+            <canvas id="visualizer"></canvas>
+        </div>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" data-mode="all">All Pads</button>
+            <button class="mode-btn" data-mode="beats">Beats</button>
+            <button class="mode-btn" data-mode="melody">Melody</button>
+            <button class="mode-btn" data-mode="fx">FX</button>
+        </div>
+
+        <div class="pad-container"></div>
+
+        <div class="session-controls">
+            <button id="save-session" class="neon-button">Save Session</button>
+            <select id="load-session">
+                <option value="">Load Session</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Templates for dynamic content -->
+    <template id="pad-template">
+        <div class="pad" data-category="">
+            <div class="pad-content">
+                <span class="loader"></span>
+                <span class="beat-name"></span>
+            </div>
+            <div class="pad-controls">
+                <div class="control-group">
+                    <label>Vol</label>
+                    <input type="range" class="volume-control" min="0" max="100" value="80">
+                </div>
+                <div class="control-group">
+                    <label>Delay</label>
+                    <input type="range" class="delay-control" min="0" max="100" value="0">
+                </div>
+                <div class="control-group">
+                    <label>Filter</label>
+                    <input type="range" class="filter-control" min="0" max="100" value="100">
+                </div>
+                <button class="loop-btn">Loop</button>
+            </div>
+        </div>
+    </template>
+
+    <div id="custom-beat-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Add Custom Beat</h2>
+            <div class="form-group">
+                <label for="beat-name">Beat Name:</label>
+                <input type="text" id="beat-name" placeholder="Enter a name for your beat">
+            </div>
+            <div class="form-group">
+                <label for="beat-category">Category:</label>
+                <select id="beat-category">
+                    <option value="beats">Beats</option>
+                    <option value="melody">Melody</option>
+                    <option value="fx">FX</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="beat-file">Audio File:</label>
+                <input type="file" id="beat-file" accept="audio/*">
+            </div>
+            <button id="upload-beat" class="neon-button">Add Beat</button>
+        </div>
+    </div>
+
+    <!-- Load the audio data -->
+    <script>
+    const API_BASE_URL = 'http://localhost:5001/api';
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Initialize Web Audio API
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+      const masterGainNode = audioContext.createGain()
+      masterGainNode.connect(audioContext.destination)
+    
+      // Set up audio analyzer for visualizer
+      const analyser = audioContext.createAnalyser()
+      analyser.fftSize = 256
+      masterGainNode.connect(analyser)
+    
+      // Variables for recording
+      let mediaRecorder
+      let recordedChunks = []
+      let isRecording = false
+      let recordingStream
+    
+      // Pad tracking
+      const activePads = new Map()
+      const padNodes = new Map()
+    
+      // Session storage
+      const sessions = JSON.parse(localStorage.getItem("groovePadSessions") || "{}")
+    
+      // DOM Elements
+      const padContainer = document.querySelector(".pad-container")
+      const padTemplate = document.getElementById("pad-template")
+      const visualizerCanvas = document.getElementById("visualizer")
+      const visualizerCtx = visualizerCanvas.getContext("2d")
+      const masterVolumeControl = document.getElementById("master-volume")
+      const bpmControl = document.getElementById("bpm")
+      const stopAllButton = document.getElementById("stop-all")
+      const recordToggleButton = document.getElementById("record-toggle")
+      const downloadRecordingButton = document.getElementById("download-recording")
+      const saveSessionButton = document.getElementById("save-session")
+      const loadSessionSelect = document.getElementById("load-session")
+      const modeBtns = document.querySelectorAll(".mode-btn")
+    
+      // Set canvas size
+      function resizeCanvas() {
+        visualizerCanvas.width = visualizerCanvas.offsetWidth
+        visualizerCanvas.height = visualizerCanvas.offsetHeight
+      }
+      resizeCanvas()
+      window.addEventListener("resize", resizeCanvas)
+    
+      // Initialize master volume
+      masterVolumeControl.addEventListener("input", function () {
+        const volume = this.value / 100
+        masterGainNode.gain.value = volume
+      })
+      masterGainNode.gain.value = masterVolumeControl.value / 100
+    
+      // Initialize BPM
+      let currentBPM = Number.parseInt(bpmControl.value)
+      bpmControl.addEventListener("input", function () {
+        currentBPM = Number.parseInt(this.value)
+      })
+    
+      // Stop all sounds
+      stopAllButton.addEventListener("click", () => {
+        stopAllSounds()
+      })
+    
+      function stopAllSounds() {
+        activePads.forEach((audioData, pad) => {
+          stopPad(pad)
+        })
+      }
+    
+      // Recording functionality - captures actual audio output
+      recordToggleButton.addEventListener("click", () => {
+        if (!isRecording) {
+          try {
+            recordedChunks = []
+    
+            // Create a MediaStreamDestination to capture the audio output
+            const destinationNode = audioContext.createMediaStreamDestination()
+    
+            // Connect the master gain node to the destination
+            masterGainNode.connect(destinationNode)
+            recordingStream = destinationNode.stream
+    
+            // Create a MediaRecorder to record the stream
+            mediaRecorder = new MediaRecorder(destinationNode.stream)
+    
+            mediaRecorder.ondataavailable = (e) => {
+              if (e.data.size > 0) {
+                recordedChunks.push(e.data)
+              }
+            }
+    
+            mediaRecorder.onstop = () => {
+              // Disconnect the destination node when recording stops
+              masterGainNode.disconnect(destinationNode)
+              downloadRecordingButton.disabled = false
+            }
+    
+            mediaRecorder.start(1000) // Collect data every second
+            isRecording = true
+            recordToggleButton.textContent = "Stop Recording"
+            recordToggleButton.classList.add("recording")
+          } catch (err) {
+            console.error("Error recording audio:", err)
+            alert("Could not start recording.")
+          }
+        } else {
+          mediaRecorder.stop()
+          isRecording = false
+          recordToggleButton.textContent = "Record"
+          recordToggleButton.classList.remove("recording")
+        }
+      })
+    
+      // Download recording
+      downloadRecordingButton.addEventListener("click", () => {
+        if (recordedChunks.length === 0) return
+    
+        const blob = new Blob(recordedChunks, { type: "audio/webm" })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.style.display = "none"
+        a.href = url
+        a.download = "groovepad-recording.webm"
+        document.body.appendChild(a)
+        a.click()
+    
+        setTimeout(() => {
+          document.body.removeChild(a)
+          window.URL.revokeObjectURL(url)
+        }, 100)
+      })
+    
+      // Session management
+      function updateSessionList() {
+        // Clear existing options except the first one
+        while (loadSessionSelect.options.length > 1) {
+          loadSessionSelect.remove(1)
+        }
+    
+        // Add session options
+        Object.keys(sessions).forEach((sessionName) => {
+          const option = document.createElement("option")
+          option.value = sessionName
+          option.textContent = sessionName
+          loadSessionSelect.appendChild(option)
+        })
+      }
+    
+      saveSessionButton.addEventListener("click", () => {
+        const sessionName = prompt("Enter a name for this session:")
+        if (!sessionName) return
+    
+        const sessionData = {
+          pads: {},
+        }
+    
+        padNodes.forEach((nodeData, padElement) => {
+          const padId = padElement.dataset.sound
+          sessionData.pads[padId] = {
+            active: padElement.classList.contains("active"),
+            volume: nodeData.gainNode.gain.value,
+            delay: nodeData.delayNode ? nodeData.delayNode.delayTime.value : 0,
+            filter: nodeData.filterNode ? nodeData.filterNode.frequency.value : 20000,
+            loop: padElement.querySelector(".loop-btn").classList.contains("active"),
+          }
+        })
+    
+        sessions[sessionName] = sessionData
+        localStorage.setItem("groovePadSessions", JSON.stringify(sessions))
+        updateSessionList()
+    
+        alert(`Session "${sessionName}" saved!`)
+      })
+    
+      loadSessionSelect.addEventListener("change", function () {
+        const sessionName = this.value
+        if (!sessionName) return
+    
+        const sessionData = sessions[sessionName]
+        if (!sessionData) return
+    
+        // Stop all current sounds
+        stopAllSounds()
+    
+        // Apply session data
+        Object.entries(sessionData.pads).forEach(([padId, settings]) => {
+          const padElement = document.querySelector(`.pad[data-sound="${padId}"]`)
+          if (!padElement) return
+    
+          const nodeData = padNodes.get(padElement)
+          if (!nodeData) return
+    
+          // Set volume
+          nodeData.gainNode.gain.value = settings.volume
+          padElement.querySelector(".volume-control").value = settings.volume * 100
+    
+          // Set delay if available
+          if (nodeData.delayNode && settings.delay) {
+            nodeData.delayNode.delayTime.value = settings.delay
+            padElement.querySelector(".delay-control").value = settings.delay * 10
+          }
+    
+          // Set filter if available
+          if (nodeData.filterNode && settings.filter) {
+            nodeData.filterNode.frequency.value = settings.filter
+            const filterValue = (Math.log10(settings.filter) - 2) * 25 // Convert from log scale
+            padElement.querySelector(".filter-control").value = Math.min(100, Math.max(0, filterValue))
+          }
+    
+          // Set loop
+          const loopBtn = padElement.querySelector(".loop-btn")
+          if (settings.loop) {
+            loopBtn.classList.add("active")
+          } else {
+            loopBtn.classList.remove("active")
+          }
+    
+          // Activate pad if it was active
+          if (settings.active) {
+            playPad(padElement)
+          }
+        })
+    
+        alert(`Session "${sessionName}" loaded!`)
+      })
+    
+      // Initialize session list
+      updateSessionList()
+    
+      // Mode filtering
+      modeBtns.forEach((btn) => {
+        btn.addEventListener("click", function () {
+          modeBtns.forEach((b) => b.classList.remove("active"))
+          this.classList.add("active")
+    
+          const mode = this.dataset.mode
+          const pads = document.querySelectorAll(".pad")
+    
+          if (mode === "all") {
+            pads.forEach((pad) => (pad.style.display = "flex"))
+          } else {
+            pads.forEach((pad) => {
+              if (pad.dataset.category === mode) {
+                pad.style.display = "flex"
+              } else {
+                pad.style.display = "none"
+              }
+            })
+          }
+        })
+      })
+    
+      // Create audio buffer cache
+      const audioBufferCache = new Map()
+    
+      // Load audio file and cache it
+      async function loadAudio(url) {
+        if (audioBufferCache.has(url)) {
+          return audioBufferCache.get(url)
+        }
+    
+        try {
+          const response = await fetch(url)
+          if (!response.ok) {
+            console.error(`Failed to load audio: ${url} - Status: ${response.status}`)
+            return null
+          }
+    
+          const arrayBuffer = await response.arrayBuffer()
+          if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+            console.error(`Empty audio data received for: ${url}`)
+            return null
+          }
+    
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
+          if (!audioBuffer) {
+            console.error(`Failed to decode audio data for: ${url}`)
+            return null
+          }
+    
+          audioBufferCache.set(url, audioBuffer)
+          return audioBuffer
+        } catch (error) {
+          console.error(`Error loading audio (${url}):`, error)
+          return null
+        }
+      }
+    
+      // Modified playPad function to handle loading errors
+      async function playPad(pad) {
+        if (pad.classList.contains("active")) return
+    
+        const soundUrl = pad.dataset.sound
+        try {
+          const audioBuffer = await loadAudio(soundUrl)
+          if (!audioBuffer) {
+            pad.querySelector(".beat-name").textContent += " (Error)"
+            pad.style.opacity = "0.5"
+            return
+          }
+    
+          const nodeData = padNodes.get(pad)
+          if (!nodeData) return
+    
+          const source = audioContext.createBufferSource()
+          source.buffer = audioBuffer
+    
+          source.connect(nodeData.gainNode)
+          const loopBtn = pad.querySelector(".loop-btn")
+          source.loop = loopBtn.classList.contains("active")
+    
+          source.start()
+          pad.classList.add("active")
+    
+          activePads.set(pad, {
+            source,
+            startTime: audioContext.currentTime,
+          })
+    
+          if (!source.loop) {
+            source.onended = () => {
+              pad.classList.remove("active")
+              activePads.delete(pad)
+            }
+          }
+        } catch (error) {
+          console.error(`Error playing pad (${soundUrl}):`, error)
+          pad.querySelector(".beat-name").textContent += " (Error)"
+          pad.style.opacity = "0.5"
+        }
+      }
+    
+      // Sample audio data (replace with your actual data source)
+      // Removed static audioData and replaced with dynamic fetch from Flask API
+
+      async function fetchBeats() {
+        try {
+          const response = await fetch(`${API_BASE_URL}/beats`);
+          if (!response.ok) {
+            console.error("Failed to fetch beats from API");
+            return [];
+          }
+          const data = await response.json();
+          return data.beats || [];
+        } catch (error) {
+          console.error("Error fetching beats:", error);
+          return [];
+        }
+      }
+
+      // Create pads from beats fetched from API
+      async function createPadsFromAPI() {
+        const beats = await fetchBeats();
+
+        // Categorize pads by mood or default to 'beats'
+        const categories = {
+          beats: ["Energetic"],
+          melody: ["Relax"],
+          fx: ["Sad", "Happy"],
+        };
+
+        beats.forEach((beat) => {
+          // Determine category based on mood
+          let category = "beats";
+          for (const [cat, moods] of Object.entries(categories)) {
+            if (moods.includes(beat.mood)) {
+              category = cat;
+              break;
+            }
+          }
+
+          // Clone template
+          const padClone = padTemplate.content.cloneNode(true);
+          const pad = padClone.querySelector(".pad");
+
+          // Set attributes
+          pad.setAttribute("data-sound", beat.audio_url);
+          pad.setAttribute("data-category", category);
+          pad.setAttribute("data-beat-id", beat.id);
+          pad.querySelector(".beat-name").textContent = beat.name;
+
+          // Create audio nodes for this pad
+          const gainNode = audioContext.createGain();
+          const filterNode = audioContext.createBiquadFilter();
+          const delayNode = audioContext.createDelay(5.0);
+          const feedbackNode = audioContext.createGain();
+
+          // Set up audio graph
+          filterNode.type = "lowpass";
+          filterNode.frequency.value = 20000; // Default to max
+
+          delayNode.delayTime.value = 0; // Default no delay
+          feedbackNode.gain.value = 0.3; // 30% feedback
+
+          // Connect nodes
+          gainNode.connect(filterNode);
+          filterNode.connect(masterGainNode);
+
+          // Delay path
+          filterNode.connect(delayNode);
+          delayNode.connect(feedbackNode);
+          feedbackNode.connect(delayNode);
+          delayNode.connect(masterGainNode);
+
+          // Store nodes
+          padNodes.set(pad, {
+            gainNode,
+            filterNode,
+            delayNode,
+            feedbackNode,
+          });
+
+          // Set up controls
+          const volumeControl = pad.querySelector(".volume-control");
+          volumeControl.addEventListener("input", function () {
+            gainNode.gain.value = this.value / 100;
+          });
+          gainNode.gain.value = volumeControl.value / 100;
+
+          const delayControl = pad.querySelector(".delay-control");
+          delayControl.addEventListener("input", function () {
+            delayNode.delayTime.value = this.value / 100;
+          });
+
+          const filterControl = pad.querySelector(".filter-control");
+          filterControl.addEventListener("input", function () {
+            // Logarithmic scale for frequency (100Hz to 20000Hz)
+            const value = this.value / 100;
+            const frequency = Math.pow(10, 2 + value * 3); // 100Hz to 20000Hz
+            filterNode.frequency.value = frequency;
+          });
+
+          const loopBtn = pad.querySelector(".loop-btn");
+          loopBtn.addEventListener("click", function () {
+            this.classList.toggle("active");
+          });
+
+          // Play/stop on click
+          const padContent = pad.querySelector(".pad-content");
+          padContent.addEventListener("click", async () => {
+            const isActive = pad.classList.contains("active");
+            const beatId = pad.getAttribute("data-beat-id");
+
+            if (isActive) {
+              console.log(`Sending stop request for beat ID: ${beatId}`);
+              // Call API to stop beat
+              try {
+                const response = await fetch(`${API_BASE_URL}/beats/${beatId}/stop`, {
+                  method: "POST",
+                });
+                if (response.ok) {
+                  console.log(`Stop beat request successful for beat ID: ${beatId}`);
+                  stopPad(pad);
+                } else {
+                  console.error("Failed to stop beat");
+                }
+              } catch (error) {
+                console.error("Error stopping beat:", error);
+              }
+            } else {
+              console.log(`Sending play request for beat ID: ${beatId}`);
+              // Call API to play beat
+              try {
+                const response = await fetch(`${API_BASE_URL}/beats/${beatId}/play`, {
+                  method: "POST",
+                });
+                if (response.ok) {
+                  console.log(`Play beat request successful for beat ID: ${beatId}`);
+                  playPad(pad);
+                } else {
+                  console.error("Failed to play beat");
+                }
+              } catch (error) {
+                console.error("Error playing beat:", error);
+              }
+            }
+          });
+
+          // Add to container
+          padContainer.appendChild(pad);
+        });
+      }
+
+      // Replace createPads() call with createPadsFromAPI()
+      createPadsFromAPI();
+    
+      // Create pads from audio data
+      function createPads() {
+        // Categorize pads
+        const categories = {
+          beats: ["Beat 1", "Beat 2", "Beat 3", "Beat 4", "Beat 5", "Beat 6", "Beat 7", "Beat 8", "Beat 9", "Beat 10"],
+          melody: ["Arijit", "Bollywood", "Lofi", "Soulful"],
+          fx: ["Night"],
+        }
+    
+        audioData.pads.forEach((padData) => {
+          // Determine category
+          let category = "fx"
+          for (const [cat, names] of Object.entries(categories)) {
+            if (names.includes(padData.name)) {
+              category = cat
+              break
+            }
+          }
+    
+          // Clone template
+          const padClone = padTemplate.content.cloneNode(true)
+          const pad = padClone.querySelector(".pad")
+    
+          // Set attributes
+          pad.setAttribute("data-sound", padData.sound)
+          pad.setAttribute("data-category", category)
+          pad.querySelector(".beat-name").textContent = padData.name
+    
+          // Create audio nodes for this pad
+          const gainNode = audioContext.createGain()
+          const filterNode = audioContext.createBiquadFilter()
+          const delayNode = audioContext.createDelay(5.0)
+          const feedbackNode = audioContext.createGain()
+    
+          // Set up audio graph
+          filterNode.type = "lowpass"
+          filterNode.frequency.value = 20000 // Default to max
+    
+          delayNode.delayTime.value = 0 // Default no delay
+          feedbackNode.gain.value = 0.3 // 30% feedback
+    
+          // Connect nodes
+          gainNode.connect(filterNode)
+          filterNode.connect(masterGainNode)
+    
+          // Delay path
+          filterNode.connect(delayNode)
+          delayNode.connect(feedbackNode)
+          feedbackNode.connect(delayNode)
+          delayNode.connect(masterGainNode)
+    
+          // Store nodes
+          padNodes.set(pad, {
+            gainNode,
+            filterNode,
+            delayNode,
+            feedbackNode,
+          })
+    
+          // Set up controls
+          const volumeControl = pad.querySelector(".volume-control")
+          volumeControl.addEventListener("input", function () {
+            gainNode.gain.value = this.value / 100
+          })
+          gainNode.gain.value = volumeControl.value / 100
+    
+          const delayControl = pad.querySelector(".delay-control")
+          delayControl.addEventListener("input", function () {
+            delayNode.delayTime.value = this.value / 100
+          })
+    
+          const filterControl = pad.querySelector(".filter-control")
+          filterControl.addEventListener("input", function () {
+            // Logarithmic scale for frequency (100Hz to 20000Hz)
+            const value = this.value / 100
+            const frequency = Math.pow(10, 2 + value * 3) // 100Hz to 20000Hz
+            filterNode.frequency.value = frequency
+          })
+    
+          const loopBtn = pad.querySelector(".loop-btn")
+          loopBtn.addEventListener("click", function () {
+            this.classList.toggle("active")
+          })
+    
+          // Play/stop on click
+          const padContent = pad.querySelector(".pad-content")
+          padContent.addEventListener("click", async () => {
+            const isActive = pad.classList.contains("active")
+
+            if (isActive) {
+              stopPad(pad)
+            } else {
+              try {
+                const response = await fetch('/play_beat/', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                  }
+                });
+                
+                if (response.ok) {
+                  playPad(pad);
+                } else if (response.status === 403) {
+                  window.location.href = '/login/';
+                }
+              } catch (error) {
+                console.error('Error:', error);
+              }
+            }
+          })
+    
+          // Add to container
+          padContainer.appendChild(pad)
+        })
+      }
+    
+      // Play a pad
+      async function playPad(pad) {
+        if (pad.classList.contains("active")) return
+    
+        const soundUrl = pad.dataset.sound
+        const audioBuffer = await loadAudio(soundUrl)
+    
+        if (!audioBuffer) return
+    
+        const nodeData = padNodes.get(pad)
+        if (!nodeData) return
+    
+        const source = audioContext.createBufferSource()
+        source.buffer = audioBuffer
+    
+        // Connect to the pad's gain node
+        source.connect(nodeData.gainNode)
+    
+        // Set loop based on button state
+        const loopBtn = pad.querySelector(".loop-btn")
+        source.loop = loopBtn.classList.contains("active")
+    
+        // Start playback
+        source.start()
+        pad.classList.add("active")
+    
+        // Store source for later stopping
+        activePads.set(pad, {
+          source,
+          startTime: audioContext.currentTime,
+        })
+    
+        // Handle non-looping sounds ending
+        if (!source.loop) {
+          source.onended = () => {
+            pad.classList.remove("active")
+            activePads.delete(pad)
+          }
+        }
+      }
+    
+      // Stop a pad
+      function stopPad(pad) {
+        const audioData = activePads.get(pad)
+        if (!audioData) return
+    
+        try {
+          audioData.source.stop()
+        } catch (e) {
+          // Source might have already stopped
+        }
+    
+        pad.classList.remove("active")
+        activePads.delete(pad)
+      }
+    
+      // Draw visualizer
+      function drawVisualizer() {
+        requestAnimationFrame(drawVisualizer)
+    
+        const bufferLength = analyser.frequencyBinCount
+        const dataArray = new Uint8Array(bufferLength)
+        analyser.getByteFrequencyData(dataArray)
+    
+        const width = visualizerCanvas.width
+        const height = visualizerCanvas.height
+    
+        visualizerCtx.clearRect(0, 0, width, height)
+    
+        const barWidth = width / bufferLength
+    
+        let x = 0
+    
+        for (let i = 0; i < bufferLength; i++) {
+          const barHeight = (dataArray[i] / 255) * height
+    
+          // Create gradient for bars
+          const gradient = visualizerCtx.createLinearGradient(0, height, 0, height - barHeight)
+          gradient.addColorStop(0, "rgba(106, 0, 255, 0.8)")
+          gradient.addColorStop(1, "rgba(255, 0, 255, 0.8)")
+    
+          visualizerCtx.fillStyle = gradient
+          visualizerCtx.fillRect(x, height - barHeight, barWidth - 1, barHeight)
+    
+          x += barWidth
+        }
+      }
+    
+      // Initialize
+      createPads()
+      drawVisualizer()
+    
+      // Resume audio context on user interaction (required by browsers)
+      document.body.addEventListener(
+        "click",
+        () => {
+          if (audioContext.state === "suspended") {
+            audioContext.resume()
+          }
+        },
+        { once: true },
+      )
+    
+      // Custom Beat Upload Functionality
+      const addCustomBeatButton = document.getElementById("add-custom-beat")
+      const customBeatModal = document.getElementById("custom-beat-modal")
+      const closeModalButton = document.querySelector(".close-modal")
+      const uploadBeatButton = document.getElementById("upload-beat")
+      const beatNameInput = document.getElementById("beat-name")
+      const beatCategorySelect = document.getElementById("beat-category")
+      const beatFileInput = document.getElementById("beat-file")
+    
+      // Custom beats storage
+      const customBeats = JSON.parse(localStorage.getItem("customBeats") || "[]")
+    
+      // Show modal
+      addCustomBeatButton.addEventListener("click", () => {
+        customBeatModal.style.display = "block"
+      })
+    
+      // Close modal
+      closeModalButton.addEventListener("click", () => {
+        customBeatModal.style.display = "none"
+      })
+    
+      // Close modal when clicking outside
+      window.addEventListener("click", (event) => {
+        if (event.target === customBeatModal) {
+          customBeatModal.style.display = "none"
+        }
+      })
+    
+      // Handle beat upload
+      uploadBeatButton.addEventListener("click", async () => {
+        const name = beatNameInput.value.trim()
+        const category = beatCategorySelect.value
+        const file = beatFileInput.files[0]
+    
+        if (!name) {
+          alert("Please enter a name for your beat")
+          return
+        }
+    
+        if (!file) {
+          alert("Please select an audio file")
+          return
+        }
+    
+        try {
+          // Create a URL for the file
+          const fileURL = URL.createObjectURL(file)
+    
+          // Create a new pad data object
+          const newPadData = {
+            name: name,
+            sound: fileURL,
+            isCustom: true,
+            category: category,
+          }
+    
+          // Add to custom beats array and save to localStorage
+          customBeats.push(newPadData)
+          localStorage.setItem("customBeats", JSON.stringify(customBeats))
+    
+          // Create a new pad element
+          createCustomPad(newPadData)
+    
+          // Reset form and close modal
+          beatNameInput.value = ""
+          beatFileInput.value = ""
+          customBeatModal.style.display = "none"
+    
+          alert("Custom beat added successfully!")
+        } catch (error) {
+          console.error("Error adding custom beat:", error)
+          alert("Failed to add custom beat. Please try again.")
+        }
+      })
+    
+      // Function to create a custom pad
+      function createCustomPad(padData) {
+        // Clone template
+        const padClone = padTemplate.content.cloneNode(true)
+        const pad = padClone.querySelector(".pad")
+    
+        // Set attributes
+        pad.setAttribute("data-sound", padData.sound)
+        pad.setAttribute("data-category", padData.category)
+        pad.querySelector(".beat-name").textContent = padData.name
+    
+        // Add custom class for styling
+        if (padData.isCustom) {
+          pad.classList.add("custom-pad")
+        }
+    
+        // Create audio nodes for this pad
+        const gainNode = audioContext.createGain()
+        const filterNode = audioContext.createBiquadFilter()
+        const delayNode = audioContext.createDelay(5.0)
+        const feedbackNode = audioContext.createGain()
+    
+        // Set up audio graph
+        filterNode.type = "lowpass"
+        filterNode.frequency.value = 20000 // Default to max
+    
+        delayNode.delayTime.value = 0 // Default no delay
+        feedbackNode.gain.value = 0.3 // 30% feedback
+    
+        // Connect nodes
+        gainNode.connect(filterNode)
+        filterNode.connect(masterGainNode)
+    
+        // Delay path
+        filterNode.connect(delayNode)
+        delayNode.connect(feedbackNode)
+        feedbackNode.connect(delayNode)
+        delayNode.connect(masterGainNode)
+    
+        // Store nodes
+        padNodes.set(pad, {
+          gainNode,
+          filterNode,
+          delayNode,
+          feedbackNode,
+        })
+    
+        // Set up controls
+        const volumeControl = pad.querySelector(".volume-control")
+        volumeControl.addEventListener("input", function () {
+          gainNode.gain.value = this.value / 100
+        })
+        gainNode.gain.value = volumeControl.value / 100
+    
+        const delayControl = pad.querySelector(".delay-control")
+        delayControl.addEventListener("input", function () {
+          delayNode.delayTime.value = this.value / 100
+        })
+    
+        const filterControl = pad.querySelector(".filter-control")
+        filterControl.addEventListener("input", function () {
+          // Logarithmic scale for frequency (100Hz to 20000Hz)
+          const value = this.value / 100
+          const frequency = Math.pow(10, 2 + value * 3) // 100Hz to 20000Hz
+          filterNode.frequency.value = frequency
+        })
+    
+        const loopBtn = pad.querySelector(".loop-btn")
+        loopBtn.addEventListener("click", function () {
+          this.classList.toggle("active")
+        })
+    
+        // Play/stop on click
+        const padContent = pad.querySelector(".pad-content")
+        padContent.addEventListener("click", () => {
+          const isActive = pad.classList.contains("active")
+    
+          if (isActive) {
+            stopPad(pad)
+          } else {
+            playPad(pad)
+          }
+        })
+    
+        // Add to container
+        padContainer.appendChild(pad)
+      }
+    
+      // Load custom beats on startup
+      function loadCustomBeats() {
+        customBeats.forEach((beatData) => {
+          createCustomPad(beatData)
+        })
+      }
+    
+      // Call this after createPads()
+      loadCustomBeats()
+    })
+
+  //   const audioData = {
+  //   pads: [
+  //     { sound: "/static/audio/beat1.mp3", name: "Beat 1" },
+  //     { sound: "/static/audio/Beat2.mp3", name: "Beat 2" },
+  //     { sound: "/static/audio/Beat3.mp3", name: "Beat 3" },
+  //     { sound: "/static/audio/Beat4.mp3", name: "Beat 4" },
+  //     { sound: "/static/audio/Beat5.mp3", name: "Beat 5" },
+  //     { sound: "/static/audio/Beat6.mp3", name: "Beat 6" },
+  //     { sound: "/static/audio/Beat7.mp3", name: "Beat 7" },
+  //     { sound: "/static/audio/Beat8.mp3", name: "Beat 8" },
+  //     { sound: "/static/audio/Beat9.mp3", name: "Beat 9" },
+  //     { sound: "/static/audio/Beat10.mp3", name: "Beat 10" },
+  //     { sound: "/static/audio/arijit.mp3", name: "Arijit" },
+  //     { sound: "/static/audio/bollywood.mp3", name: "Bollywood" },
+  //     { sound: "/static/audio/lofi.mp3", name: "Lofi" },
+  //     { sound: "/static/audio/soulful.mp3", name: "Soulful" },
+  //     { sound: "/static/audio/night.mp3", name: "Night" },
+  //   ],
+  // }
+  
+    </script>
+
+</body>
+</html>
